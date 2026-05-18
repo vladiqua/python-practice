@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.env
+.vscode/
+
+# Результаты обработки (создаются программой)
+practice_09/output/
+practice_10/output/
+
+# Свои фото и открытки — только на компьютере
+practice_09/images/*
+!practice_09/images/.gitkeep
+practice_10/postcards/*
+!practice_10/postcards/.gitkeep
