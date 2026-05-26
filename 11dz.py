@@ -1,101 +1,99 @@
-# Практическое занятие 11: работа с файлами и CSV
-
+import json
 from pathlib import Path
-from PIL import Image, ImageOps
-import csv
 
 
-# -------------------- 11.1 --------------------
-# Подготовить 5 графических файлов в папке и обработать их,
-# итоговая папка создается через Pathlib.
-
-def task_11_1():
-    source_dir = Path("images_source")
-    result_dir = Path("images_result")
-
-    source_dir.mkdir(exist_ok=True)
-    result_dir.mkdir(exist_ok=True)
-
-    # Создаем 5 тестовых изображений (если их нет)
-    colors = ["red", "green", "blue", "yellow", "purple"]
-    for i, color in enumerate(colors, start=1):
-        img_path = source_dir / f"img_{i}.png"
-        if not img_path.exists():
-            img = Image.new("RGB", (300, 200), color=color)
-            img.save(img_path)
-
-    # Обрабатываем: перевод в ч/б
-    for file in source_dir.iterdir():
-        if file.is_file():
-            with Image.open(file) as img:
-                processed = ImageOps.grayscale(img)
-                out_path = result_dir / f"{file.stem}_gray{file.suffix}"
-                processed.save(out_path)
-
-    print("11.1 выполнено: изображения обработаны и сохранены в", result_dir)
+def ensure_json_file(json_path: Path) -> None:
+    if not json_path.exists():
+        data = {
+            "products": [
+                {"name": "Шоколад", "price": 50, "available": True, "weight": 100},
+                {"name": "Кофе", "price": 100, "available": False, "weight": 250},
+                {"name": "Чай", "price": 70, "available": True, "weight": 50},
+            ]
+        }
+        with json_path.open("w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-# -------------------- 11.2 --------------------
-# Обрабатывать только jpg/png, игнорируя остальные типы.
-
-def task_11_2():
-    source_dir = Path("mixed_files")
-    result_dir = Path("filtered_result")
-
-    source_dir.mkdir(exist_ok=True)
-    result_dir.mkdir(exist_ok=True)
-
-    allowed_ext = {".jpg", ".jpeg", ".png"}
-
-    for file in source_dir.iterdir():
-        if file.is_file() and file.suffix.lower() in allowed_ext:
-            with Image.open(file) as img:
-                # Пример операции: отзеркаливание
-                processed = ImageOps.mirror(img)
-                out_path = result_dir / f"{file.stem}_mirror{file.suffix}"
-                processed.save(out_path)
+def print_products(data: dict) -> None:
+    for product in data.get("products", []):
+        print(f"Название: {product['name']}")
+        print(f"Цена: {product['price']}")
+        print(f"Вес: {product['weight']}")
+        if product.get("available"):
+            print("В наличии")
         else:
-            # Можно не печатать, но так видно, что фильтрация работает
-            print("Пропущен файл:", file.name)
-
-    print("11.2 выполнено: обработаны только jpg/png из", source_dir)
+            print("Нет в наличии!")
+        print()
 
 
-# -------------------- 11.3 --------------------
-# Считать CSV, вывести список покупок и итоговую сумму.
+def task_12_1(json_path: Path) -> None:
+    with json_path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
 
-def task_11_3():
-    csv_file = Path("products.csv")
+    print("12.1) Содержимое файла JSON:")
+    print_products(data)
 
-    # Если файла нет, создаем пример из задания
-    if not csv_file.exists():
-        with csv_file.open("w", encoding="utf-8", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(["Продукт", "Количество", "Цена"])
-            writer.writerow(["Молоко", 2, 80])
-            writer.writerow(["Сыр", 1, 500])
-            writer.writerow(["Хлеб", 2, 70])
 
-    total = 0
-    rows = []
+def task_12_2(json_path: Path) -> None:
+    with json_path.open("r", encoding="utf-8") as f:
+        data = json.load(f)
 
-    with csv_file.open("r", encoding="utf-8", newline="") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            name = row["Продукт"]
-            qty = int(row["Количество"])
-            price = int(row["Цена"])
-            total += qty * price
-            rows.append((name, qty, price))
+    print("12.2) Добавление нового продукта:")
+    name = input("Введите название: ")
+    price = int(input("Введите цену: "))
+    weight = int(input("Введите вес: "))
+    available_input = input("В наличии? (да/нет): ").strip().lower()
+    available = available_input in {"да", "д", "yes", "y", "true", "1"}
 
-    print("Нужно купить:")
-    for name, qty, price in rows:
-        print(f"{name} - {qty} шт. за {price} руб.")
-    print(f"Итоговая сумма: {total} руб.")
+    new_product = {
+        "name": name,
+        "price": price,
+        "available": available,
+        "weight": weight,
+    }
+
+    data.setdefault("products", []).append(new_product)
+
+    with json_path.open("w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    print("\nОбновленное содержимое файла JSON:")
+    print_products(data)
 
 
 if __name__ == "__main__":
 
-    task_11_1()
-    task_11_2()
-    task_11_3()
+    file_path = Path("products.json")
+    ensure_json_file(file_path)
+
+    task_12_1(file_path)
+    task_12_2(file_path)
+{
+  "products": [
+    {
+      "name": "Шоколад",
+      "price": 50,
+      "available": True,
+      "weight": 100
+    },
+    {
+      "name": "Кофе",
+      "price": 100,
+      "available": False,
+      "weight": 250
+    },
+    {
+      "name": "Чай",
+      "price": 70,
+      "available": True,
+      "weight": 50
+    },
+    {
+      "name": "???????",
+      "price": 120,
+      "available": False,
+      "weight": 300
+    }
+  ]
+}
